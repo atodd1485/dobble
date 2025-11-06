@@ -11,7 +11,7 @@ for i,file in enumerate(os.listdir(ICONS_DIR)):
 class Image:
     def __init__(self,position,image_path):
         img = pygame.image.load(image_path).convert_alpha()
-        size = random.randrange(40,90)
+        size = random.randrange(40,120)
         self.img = pygame.transform.smoothscale(img, (size,size))
         self.position = position
     def draw(self,screen,position):
@@ -32,7 +32,6 @@ class CardDealer:
             self.refresh()
         draw =  self.card_list.pop(random.randrange(len(self.card_list)))
         random.shuffle(draw)
-        print("Draw")
         return draw
 class Card:
     def __init__(self,x,y,radius,dealer):
