@@ -3,6 +3,7 @@ import pygame, sys, time
 
 WIDTH = 1200
 HEIGHT = 800
+
 class Game:
     def __init__(self):
 
@@ -24,12 +25,15 @@ class Game:
         self.left_score = 0
         self.right_score = 0
 
+        self.cards_highlighted = False
+
     def generate_cards(self):
         self.card_radius = int( (self.width / 8) * 1.8 )
         self.card1 = Card(self.width//4, self.height//2,self.card_radius,self.dealer)
         self.card1.fill_with_images()
         self.card2 = Card(3 * self.width//4, self.height//2,self.card_radius,self.dealer)
         self.card2.fill_with_images()
+        self.cards_highlighted = False
 
     def draw_scores(self):
         left_score = self.font.render(str(self.left_score), True, (255, 0, 0))
@@ -48,6 +52,8 @@ class Game:
             self.card1.higlight_image(el)
             self.card2.higlight_image(el)
 
+        self.cards_highlighted = True
+
     def run(self):
         while True:
             now = time.time()
@@ -55,12 +61,14 @@ class Game:
                 if e.type == pygame.QUIT:
                     pygame.quit(); sys.exit()
                 elif e.type == pygame.MOUSEBUTTONDOWN and (now - self.last_click) > 0.2:
-                    self.right_score += 1
+                    if not self.cards_highlighted:
+                        self.right_score += 1
                     self.generate_cards()
                     self.last_click = now
 
                 elif e.type == pygame.KEYDOWN and e.key == pygame.K_LCTRL and (now - self.last_key) > 0.2:
-                    self.left_score += 1
+                    if not self.cards_highlighted:
+                        self.left_score += 1
                     self.generate_cards()
                     self.last_key = now
 
@@ -69,7 +77,10 @@ class Game:
                     self.right_score = 0
 
                 elif e.type == pygame.KEYDOWN and e.key == pygame.K_SPACE:
-                    self.higlight_matching_images()
+                    if not self.cards_highlighted:
+                        self.higlight_matching_images()
+                    else:
+                        self.generate_cards()
 
             self.screen.fill((240, 240, 240))
 
