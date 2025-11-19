@@ -1,5 +1,6 @@
 from cards import Card, CardDealer
 import pygame, sys, time
+import numpy as np
 
 WIDTH = 1200
 HEIGHT = 800
@@ -23,12 +24,16 @@ class Game:
         self.last_key = 0
         self.left_score = 0
         self.right_score = 0
+        self.update_cards = 0
 
     def generate_cards(self):
+        card1_position = np.array( (self.width//4, self.height//2) )
         self.card_radius = int( (self.width / 8) * 1.8 )
-        self.card1 = Card(self.width//4, self.height//2,self.card_radius,self.dealer)
+        self.card1 = Card(card1_position,self.card_radius,self.dealer)
         self.card1.fill_with_images()
-        self.card2 = Card(3 * self.width//4, self.height//2,self.card_radius,self.dealer)
+
+        card2_position = np.array( (3 * self.width//4, self.height//2) )
+        self.card2 = Card(card2_position,self.card_radius,self.dealer)
         self.card2.fill_with_images()
 
     def draw_scores(self):
@@ -71,6 +76,10 @@ class Game:
                 elif e.type == pygame.KEYDOWN and e.key == pygame.K_SPACE:
                     self.higlight_matching_images()
 
+            if (now - self.update_cards) > 0.005:
+                self.card1.update()
+                self.card2.update()
+                self.update_cards = now
             self.screen.fill((240, 240, 240))
 
             self.card1.draw(self.screen)

@@ -15,17 +15,21 @@ class Image:
         img = pygame.image.load(self.img_path).convert_alpha()
         size = random.randrange(40,120)
         self.img = pygame.transform.smoothscale(img, (size,size))
+        self.start_position = position
         self.position = position
         self.higlighted = False
+
+        self.draw_debug = False
 
     def draw(self,screen):
         rect = self.img.get_rect(center=self.position)
         screen.blit(self.img,rect)
 
-        if self.higlighted:
+        if self.higlighted or self.draw_debug:
             border_color = (255, 0, 0)
             border_width = 5
             pygame.draw.rect(screen, border_color, rect.inflate(border_width, border_width), border_width)
+            pygame.draw.circle(screen, border_color, self.position, 4)
 
 class CardDealer:
     def __init__(self):
@@ -45,12 +49,13 @@ class CardDealer:
         return draw
 
 class Card:
-    def __init__(self,x,y,radius,dealer):
-        self.x = x
-        self.y = y
+    def __init__(self,position,radius,dealer):
+        self.position = position
+        self.start_position = position
         self.radius = radius
         self.images = list()
         self.dealer = dealer
+        self.phase = 0
 
     def fill_with_images(self):
 
@@ -60,6 +65,17 @@ class Card:
         for i,img_key in enumerate(images):
             position = self.random_sector_position(i,num_images)
             self.images.append(Image(position,img_key))
+
+    def update(self):
+        self.phase += 0.1
+        self.move()
+        #self.rotate(1)
+        self.bounce()
+
+    def move(self):
+        self.position += np.array([1,0])
+        for img in self.images:
+            img.position = img.position + np.array([1,0])
 
     def higlight_image(self,image_key):
         for img in self.images:
@@ -75,9 +91,28 @@ class Card:
         theta = random.uniform(sector_number * sector_size,
                                (sector_number + 1) * sector_size)
 
-        return (self.x + r * np.cos(theta), self.y + r * np.sin(theta))
+        return np.array( (self.position[0] + r * np.cos(theta), self.position[1] + r * np.sin(theta)) )
+
+    def rotate(self,angle_degrees):
+        theta = angle_degrees * (np.pi/180)
+        rotation_matrix = np.array([ [np.cos(theta), -np.sin(theta)],
+                                     [np.sin(theta),  np.cos(theta)] ])
+        for img in self.images:
+            relative_img_position = img.position - self.position
+            relative_img_position_rotated  = rotation_matrix @ relative_img_position
+            img.position = relative_img_position_rotated + self.position
+
+    def bounce(self):
+
+        for img in self.images:
+            relative_img_start_length = np.linalg.norm( img.start_position - self.start_position )
+            relative_img_position = img.position - self.position
+            relative_img_position_normalised = relative_img_position / np.linalg.norm(relative_img_position)
+
+            img.position = (1 + 0*np.sin(self.phase)) * relative_img_start_length * relative_img_position_normalised + self.position
 
     def draw(self,screen):
-        pygame.draw.circle(screen,(200,200,200),(self.x,self.y),self.radius,10)
+
+        pygame.draw.circle(screen,(200,200,200),self.position,self.radius,10)
         for img in self.images:
             img.draw(screen)
