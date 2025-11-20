@@ -15,7 +15,7 @@ class Image:
         img = pygame.image.load(self.img_path).convert_alpha()
         size = random.randrange(40,120)
         self.img = pygame.transform.smoothscale(img, (size,size))
-        self.start_position = position
+        self.start_position = position.copy()
         self.position = position
         self.higlighted = False
 
@@ -49,9 +49,14 @@ class CardDealer:
         return draw
 
 class Card:
+    PHASE_STEP = 0.1
+    IMAGE_OSCILLATION_AMPLITUDE = 0.2
+    SPEED = 1
+    IMAGE_ROTATION_ANG_VELOCITY = 0.5
+    IMAGE_BOUNCE_ANG_VELOCITY = 1.5
     def __init__(self,position,radius,dealer):
         self.position = position
-        self.start_position = position
+        self.start_position = position.copy()
         self.radius = radius
         self.images = list()
         self.dealer = dealer
@@ -69,13 +74,16 @@ class Card:
     def update(self):
         self.phase += 0.1
         self.move()
-        #self.rotate(1)
+        self.rotate()
         self.bounce()
 
     def move(self):
-        self.position += np.array([1,0])
+        new_position = np.array([ (1 + 0.1*np.sin(self.phase)) * self.start_position[0],
+                                  (1 + 0.1*np.sin(2*self.phase)) * self.start_position[1] ])
         for img in self.images:
-            img.position = img.position + np.array([1,0])
+            img.position  = img.position - self.position + new_position
+
+        self.position = new_position
 
     def higlight_image(self,image_key):
         for img in self.images:
@@ -91,10 +99,10 @@ class Card:
         theta = random.uniform(sector_number * sector_size,
                                (sector_number + 1) * sector_size)
 
-        return np.array( (self.position[0] + r * np.cos(theta), self.position[1] + r * np.sin(theta)) )
+        return np.array( (self.position[0] + r * np.cos(theta), self.position[1] + r * np.sin(theta)) , dtype=float )
 
-    def rotate(self,angle_degrees):
-        theta = angle_degrees * (np.pi/180)
+    def rotate(self):
+        theta = self.IMAGE_ROTATION_ANG_VELOCITY * self.PHASE_STEP
         rotation_matrix = np.array([ [np.cos(theta), -np.sin(theta)],
                                      [np.sin(theta),  np.cos(theta)] ])
         for img in self.images:
@@ -109,7 +117,8 @@ class Card:
             relative_img_position = img.position - self.position
             relative_img_position_normalised = relative_img_position / np.linalg.norm(relative_img_position)
 
-            img.position = (1 + 0*np.sin(self.phase)) * relative_img_start_length * relative_img_position_normalised + self.position
+            img.position = (1 + self.IMAGE_OSCILLATION_AMPLITUDE *np.sin(self.IMAGE_BOUNCE_ANG_VELOCITY * self.phase)) \
+                           * relative_img_start_length * relative_img_position_normalised + self.position
 
     def draw(self,screen):
 

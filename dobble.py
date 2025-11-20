@@ -15,30 +15,53 @@ class Game:
         self.screen = pygame.display.set_mode((self.width,self.height))
         self.clock = pygame.time.Clock()
         self.dealer = CardDealer()
-        self.generate_cards()
-
-        score_height = int(self.height/4 - self.card_radius/2 )
-        self.left_score_pos = (self.width//4,score_height)
-        self.right_score_pos = (self.width - self.width//4,score_height)
 
         self.last_click = 0
         self.last_key = 0
         self.left_score = 0
         self.right_score = 0
-        self.update_cards = 0
+        self.last_update_cards = 0
 
         self.cards_highlighted = False
+
+        self.mode = 0
+        self.cards = list()
+        self.num_cards = 0
+
+        self.generate_cards()
+        self.generate_scores()
 
     def generate_cards(self):
-        card1_position = np.array( (self.width//4, self.height//2) )
-        self.card_radius = int( (self.width / 8) * 1.8 )
-        self.card1 = Card(card1_position,self.card_radius,self.dealer)
-        self.card1.fill_with_images()
+        if self.mode == 0:
+            self.num_cards = 2
+            card_positions = ( np.array( (self.width//4, self.height//2), dtype=float ),
+                               np.array( (3 * self.width//4, self.height//2), dtype=float) )
+            card_radii = ( int( (self.width / 8) * 1.8 ), int( (self.width / 8) * 1.8 ))
+        elif self.mode == 1:
+            self.num_cards = 3
+            card_positions = ( np.array( (self.width//2, self.height//2), dtype=float ),
+                               np.array( (3 * self.width//4, self.height//2), dtype=float ),
+                               np.array( (3 * self.width//4, self.height//2), dtype=float ) )
+            card_radii = ( int( (self.width / 8) * 1.8 ),
+                           int( (self.width / 8) * 1.8 ),
+                           int( (self.width / 8) * 1.8 ))
+        for position,radius in zip(card_positions,card_radii):
+            new_card = Card(position,radius,self.dealer)
+            new_card.fill_with_images()
+            self.cards.append( new_card )
 
-        card2_position = np.array( (3 * self.width//4, self.height//2) )
-        self.card2 = Card(card2_position,self.card_radius,self.dealer)
-        self.card2.fill_with_images()
-        self.cards_highlighted = False
+    def update_cards(self):
+        for card in self.cards:
+            card.update()
+
+    def draw_cards(self):
+        for card in self.cards:
+            card.draw(self.screen)
+
+    def generate_score(self):
+        score_height = int(self.height/4 - (self.width / 8) * 0.9 )
+        self.left_score_pos = (self.width//4,score_height)
+        self.right_score_pos = (self.width - self.width//4,score_height)
 
     def draw_scores(self):
         left_score = self.font.render(str(self.left_score), True, (255, 0, 0))
@@ -64,7 +87,8 @@ class Game:
             now = time.time()
             for e in pygame.event.get():
                 if e.type == pygame.QUIT:
-                    pygame.quit(); sys.exit()
+                    pygame.quit()
+                    sys.exit()
                 elif e.type == pygame.MOUSEBUTTONDOWN and (now - self.last_click) > 0.2:
                     if not self.cards_highlighted:
                         self.right_score += 1
@@ -87,17 +111,15 @@ class Game:
                     else:
                         self.generate_cards()
 
-            if (now - self.update_cards) > 0.005:
-                self.card1.update()
-                self.card2.update()
-                self.update_cards = now
+            if (now - self.last_update_cards) > 0.005:
+                self.update_cards()
+                self.last_update_cards = now
+
             self.screen.fill((240, 240, 240))
-
-            self.card1.draw(self.screen)
-            self.card2.draw(self.screen)
+            self.draw_cards()
             self.draw_scores()
-            pygame.display.flip()
 
+            pygame.display.flip()
             self.clock.tick(60)
 
 if __name__ == '__main__':
