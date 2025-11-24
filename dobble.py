@@ -53,6 +53,8 @@ class Game:
         return True
 
     def generate_cards(self):
+        self.cards_highlighted = False
+
         self.cards = list()
         if self.mode == 0:
             self.num_cards = 2
@@ -179,7 +181,7 @@ class Game:
                         player_index += 1
 
                     elif e.key == pygame.K_BACKSPACE:
-                        player_input = player_input[:1]
+                        player_input = player_input[:-1]
 
                     else:
                         if e.unicode and ord(e.unicode) >= 32:
