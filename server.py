@@ -1,51 +1,74 @@
 import socket
 import threading
 
-HOST = "0.0.0.0"
-PORT = 5000
+class Client:
+    def __init__(self,name,conn):
+        self.name = name
+        self.conn = conn
+        self.connected = True
 
-clients = []
+class Server:
+    HOST = "0.0.0.0"
+    PORT = 5000
 
-def broadcast(message):
-    dead = []
-    for conn, _ in clients:
-        try:
-            conn.sendall((message + "\n").encode())
-        except:
-            dead.append((conn, _))
+    def __init__(self):
 
-    for d in dead:
-        clients.remove(d)
-
-
-def handle_client(conn, addr):
-    try:
-
-        name = conn.recv(1024).decode().strip()
-        clients.append((conn, name))
-
-        print(f"{name} connected from {addr}")
+        self.clients = []
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.bind((self.HOST, self.PORT))
+        self.socket.listen()
 
         while True:
-            data = conn.recv(1024)
-            if not data:
+            conn, addr = self.socket.accept()
+            threading.Thread(target=self.handle_client, args=(conn, addr), daemon=True).start()
+
+
+    def broadcast(self,message):
+        dead = []
+        for client in self.clients:
+            try:
+                client.conn.sendall((message + "\n").encode())
+            except:
+                dead.append(client)
+
+        for d in dead:
+            self.clients.remove(d)
+
+    def handle_client(self, conn, addr):
+        while True:
+            try:
+                data = conn.recv(1024)
+                if not data:
+                    break
+
+                decoded_message = data.decode().strip()
+
+                parts = decoded_message.split("|")
+                if len(parts) != 3:
+                    print(f"Invalid message from {addr}: {decoded_message}")
+                    continue
+
+                name, tag, message_content = parts
+
+                if tag == 'HELLO':
+                    self.clients.append(Client(conn, name))
+                    print(f"{name} connected from {addr}")
+
+                elif tag == 'MSG':
+                    self.broadcast(f"{name} says {message_content}")
+
+            except Exception as e:
+                print(f"Error with client {addr}: {e}")
                 break
-            broadcast(f"{name} pressed Enter")
-    except:
-        pass
-    finally:
-        for c in clients:
-            if c[0] is conn:
-                clients.remove(c)
+
+        for c in list(self.clients):
+            if c.conn is conn:
+                self.clients.remove(c)
+
         conn.close()
         print(f"Client disconnected: {addr}")
 
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.bind((HOST, PORT))
-server.listen()
+    print(f"Server listening on {HOST}:{PORT}")
 
-print(f"Server listening on {HOST}:{PORT}")
-
-while True:
-    conn, addr = server.accept()
-    threading.Thread(target=handle_client, args=(conn, addr), daemon=True).start()
+if __name__ == '__main__':
+    server = Server()
