@@ -10,4 +10,3 @@ class Player:
 
         if self.colour_rgb == None:
             raise KeyError
-
