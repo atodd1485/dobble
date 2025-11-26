@@ -1,5 +1,5 @@
-import socket
-import threading
+from message import RxMessage, TxMessage
+import socket, threading
 
 class Client:
     def __init__(self,name,conn):
@@ -17,46 +17,53 @@ class Server:
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.bind((self.HOST, self.PORT))
         self.socket.listen()
-
-        while True:
-            conn, addr = self.socket.accept()
-            threading.Thread(target=self.handle_client, args=(conn, addr), daemon=True).start()
-
-
+        self.socket.settimeout(1.0)
+        self.shutdown = False
+        while not self.shutdown:
+            try:
+                conn, addr = self.socket.accept()
+                threading.Thread(target=self.handle_client, args=(conn, addr), daemon=True).start()
+            except socket.timeout:
+                continue
+    
+    def send_message(self,client,message):
+        if client.connected:
+            client.conn.sendall(message.encoded_message)
+    
     def broadcast(self,message):
         dead = []
         for client in self.clients:
-            try:
-                client.conn.sendall((message + "\n").encode())
-            except:
-                dead.append(client)
-
-        for d in dead:
-            self.clients.remove(d)
+            if client.connected:
+                print("sending to {client.name}")
+                client.conn.sendall(message.encoded_message)
 
     def handle_client(self, conn, addr):
-        while True:
+        this_client = None
+        while not self.shutdown:
             try:
                 data = conn.recv(1024)
                 if not data:
                     break
 
-                decoded_message = data.decode().strip()
+                rx_message = RxMessage(data)
 
-                parts = decoded_message.split("|")
-                if len(parts) != 3:
-                    print(f"Invalid message from {addr}: {decoded_message}")
-                    continue
+                if rx_message.tag == 'HELLO':
+                    this_client = Client(rx_message.name,conn)
+                    self.clients.append(this_client)
+                    self.broadcast(TxMessage('server','MSG',f"Hello {rx_message.name}, I'm server"))
 
-                name, tag, message_content = parts
-
-                if tag == 'HELLO':
-                    self.clients.append(Client(conn, name))
-                    print(f"{name} connected from {addr}")
-
-                elif tag == 'MSG':
-                    self.broadcast(f"{name} says {message_content}")
-
+                elif rx_message.tag == 'MSG_SERVER':
+                    self.send_message(this_client,TxMessage('server','MSG',f'{rx_message.name} said {rx_message.content} to the server'))
+                    if rx_message.content == 'shutdown':
+                        print("{name} requested shutdown")
+                        self.shutdown = True
+                elif rx_message.tag == 'MSG_ALL':
+                    self.broadcast(TxMessage('server','MSG',f'{rx_message.name} said {rx_message.content} to everyone'))
+                    if rx_message.content == 'score':
+                        self.broadcast(rx_message.convert())
+                if rx_message.content == 'shutdown':
+                    print("{name} requested shutdown")
+                    self.shutdown = True
             except Exception as e:
                 print(f"Error with client {addr}: {e}")
                 break
@@ -69,6 +76,7 @@ class Server:
         print(f"Client disconnected: {addr}")
 
     print(f"Server listening on {HOST}:{PORT}")
+
 
 if __name__ == '__main__':
     server = Server()

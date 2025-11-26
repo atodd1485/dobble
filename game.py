@@ -1,6 +1,6 @@
 from cards import Card, CardDealer
 from player import Player
-from event_handler import EventHandler
+from event_handler import EventHandlerKey,EventHandlerNetwork
 
 import pygame, sys, time
 
@@ -12,7 +12,10 @@ class Game:
 
         self.width,self.height = config.window_width,config.window_height
         self.skip_player_input = config.skip_player_input
+        print(self.skip_player_input, config.skip_player_input)
         self.no_movement = config.no_movement
+
+        self.online = False
 
         self.screen = pygame.display.set_mode((self.width,self.height))
         self.clock = pygame.time.Clock()
@@ -90,7 +93,7 @@ class Game:
 
     def generate_event_handlers(self):
         self.event_handlers = list()
-        self.event_handlers.append(EventHandler(self.quit_game,0,pygame.QUIT))
+        self.event_handlers.append(EventHandlerKey(self.quit_game,0,pygame.QUIT))
         self.load_events()
 
     def draw_scores(self):
@@ -111,8 +114,14 @@ class Game:
             now = time.time()
             for e in pygame.event.get():
                 for event_handler in self.event_handlers:
-                    event_handler.check(e,now)
-
+                    if type(event_handler) == EventHandlerKey:
+                        event_handler.check(e,now)
+            if self.online:
+                for msg in self.network_interface.get_new_messages():
+                    print("MESSAGE")
+                    for event_handler in self.event_handlers:
+                        if type(event_handler) == EventHandlerNetwork:
+                            event_handler.check(msg,now)   
             if (now - self.last_update_cards) > 0.005:
                 self.update_cards()
                 self.last_update_cards = now

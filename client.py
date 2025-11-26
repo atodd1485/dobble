@@ -32,4 +32,4 @@ if __name__ == '__main__':
     client = Client(name)
     while True:
         message = input("Enter a message")
-        client.send_message('MSG', message)
+        client.send_message('MSG_ALL', message)

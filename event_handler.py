@@ -1,4 +1,4 @@
-class EventHandler:
+class EventHandlerKey:
 
     def __init__(self,callback,rate_limit,event_type,event_key=None):
 
@@ -17,5 +17,18 @@ class EventHandler:
             self.last_trigger = now
             self.callback()
 
+class EventHandlerNetwork:
 
+    def __init__(self,callback,rate_limit,tx_message):
 
+        self.last_trigger = 0
+        self.callback = callback
+        self.rate_limit = rate_limit
+        self.tx_message = tx_message
+
+    def check(self,message,now):      
+        if (now - self.last_trigger) <= self.rate_limit:
+            return
+        if message.match_message(self.tx_message):
+            self.last_trigger = now
+            self.callback()
