@@ -12,7 +12,6 @@ class Game:
 
         self.width,self.height = config.window_width,config.window_height
         self.skip_player_input = config.skip_player_input
-        print(self.skip_player_input, config.skip_player_input)
         self.no_movement = config.no_movement
 
         self.online = False

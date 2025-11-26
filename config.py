@@ -8,11 +8,11 @@ class Config:
             for line in file.readlines():
 
                 key,val = line.split('=')
-                key = key.strip()
-                val = val.strip()
+                key = key.strip().lower()
+                val = val.strip().lower()
                 print(key,val)
-                if val in ('True','False'):
-                    setattr(self, key, val == 'True')
+                if val in ('true','false'):
+                    setattr(self, key, val == 'true')
                     continue
                 try:
                     setattr(self,key,int(val))

@@ -59,7 +59,7 @@ class Server:
                         self.shutdown = True
                 elif rx_message.tag == 'MSG_ALL':
                     self.broadcast(TxMessage('server','MSG',f'{rx_message.name} said {rx_message.content} to everyone'))
-                    if rx_message.content == 'score':
+                    if rx_message.content in ('score','reset'):
                         self.broadcast(rx_message.convert())
                 if rx_message.content == 'shutdown':
                     print("{name} requested shutdown")
