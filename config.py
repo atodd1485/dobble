@@ -24,3 +24,4 @@ class Config:
                     continue
                 except ValueError:
                     pass
+                setattr(self,key,val)

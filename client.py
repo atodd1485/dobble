@@ -1,6 +1,7 @@
 import socket, threading, random
 
 from message import MessageHandler, Message
+from config import Config
 
 def network_id_input(prompt,blacklisted_ids=None):
     if blacklisted_ids is not None:
@@ -22,14 +23,13 @@ def network_id_input(prompt,blacklisted_ids=None):
 
 class Client:
 
-    HOST = "127.0.0.1"
-    PORT = 5000
-
-    def __init__(self,name):
+    def __init__(self, name, host, port):
 
         self.name = name
+        self.host = host
+        self.port = port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect((self.HOST, self.PORT))
+        self.sock.connect((self.host, self.port))
         self.rx_messages = list()
         self.network_id = None
         self.message_handler = MessageHandler()
@@ -64,6 +64,8 @@ class Client:
 
 if __name__ == '__main__':
 
+    config = Config()
+    host =  '127.0.0.1' if config.host == 'local' else config.host
     name = input("Enter name")
     client = Client(name)
     while True:

@@ -1,4 +1,5 @@
 from message import Message, MessageHandler
+from config import Config
 import socket, threading
 
 class Client:
@@ -11,16 +12,16 @@ class Client:
 
 
 class Server:
-    HOST = "0.0.0.0"
-    PORT = 5000
 
-    def __init__(self):
+    def __init__(self, host, port):
 
+        self.host = host
+        self.port = port
         self.clients = {}
         self.pairs = list()
         self.num_clients = 0
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.bind((self.HOST, self.PORT))
+        self.socket.bind((self.host, self.port))
         self.socket.listen()
         self.socket.settimeout(1.0)
         self.shutdown = False
@@ -133,4 +134,6 @@ class Server:
         print(f"Client disconnected: {addr}")
 
 if __name__ == '__main__':
-    server = Server()
+    config = Config()
+    host = '0.0.0.0' if config.host == 'local' else config.host
+    server = Server(host,config.port)

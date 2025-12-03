@@ -3,13 +3,12 @@ import threading, socket, random, time
 
 class NetworkInterface:
 
-    HOST = "127.0.0.1"
-    PORT = 5000
+    def __init__(self,player_name, host, port):
 
-    def __init__(self,player_name):
-
+        self.host = host
+        self.port = port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect((self.HOST, self.PORT))
+        self.sock.connect((self.host, self.port))
         self.sock.settimeout(0.1)
         self.rx_messages = list()
 

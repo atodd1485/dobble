@@ -133,7 +133,8 @@ class SimpleOnline(Game):
     def __init__(self,config):
         super().__init__(config)
         self.online = True
-        self.network_interface = NetworkInterface(self.player1.name)
+        host = '127.0.0.1' if config.host == 'local' else config.host
+        self.network_interface = NetworkInterface(self.player1.name, host, config.port)
         self.network_interface.get_player_network_ids(self.player1,self.player2)
         self.load_network_events()
 
