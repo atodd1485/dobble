@@ -9,7 +9,6 @@ class Game:
 
         pygame.init()
         pygame.display.set_caption("Dobble")
-
         self.width,self.height = config.window_width,config.window_height
         self.skip_player_input = config.skip_player_input
         self.no_movement = config.no_movement
@@ -36,7 +35,6 @@ class Game:
 
         self.player_entry()
         self.generate_cards()
-        self.generate_scores()
         self.generate_event_handlers()
 
     def generate_player(self,player_input,player_index):
@@ -108,7 +106,7 @@ class Game:
         self.screen.blit(self.right_name, self.right_name_rect)
 
     def play(self):
-
+        self.generate_scores()
         while True:
             now = time.time()
             for e in pygame.event.get():
@@ -120,7 +118,7 @@ class Game:
                     print("MESSAGE")
                     for event_handler in self.event_handlers:
                         if type(event_handler) == EventHandlerNetwork:
-                            event_handler.check(msg,now)   
+                            event_handler.check(msg,now)
             if (now - self.last_update_cards) > 0.005:
                 self.update_cards()
                 self.last_update_cards = now
@@ -142,7 +140,7 @@ class Game:
         player_input = ""
         player_index = 0
 
-        while player_index < 2:
+        while player_index < self.num_local_players:
             for e in pygame.event.get():
 
                 if e.type == pygame.QUIT:
@@ -171,6 +169,16 @@ class Game:
 
             pygame.display.flip()
             self.clock.tick(60)
+
+        self.screen.fill((240, 240, 240))
+        heading_text = self.small_font.render('Waiting for network players...', True, (255, 0, 0))
+        self.screen.blit(heading_text, (self.width/16,self.height/4))
+
+        pygame.display.flip()
+        self.clock.tick(60)
+
+        for i in range(self.num_network_players):
+            self.generate_player('place_holder red',player_index + i)
 
     def quit_game(self):
         print("Exiting...")

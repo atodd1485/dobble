@@ -1,14 +1,15 @@
 from game import Game
 from event_handler import EventHandlerKey, EventHandlerNetwork
 from network_interface import NetworkInterface
-from message import TxMessage
+from message import Message
 import numpy as np
 import pygame
 
 class SimpleTwoPlayer(Game):
 
     DEBOUNCE_TIME = 0.2
-
+    num_local_players = 2
+    num_network_players = 0
     def load_card_position(self):
         self.num_cards = 2
         self.card_positions = ( np.array( (self.width//4, self.height//2), dtype=float ),
@@ -27,11 +28,11 @@ class SimpleTwoPlayer(Game):
         self.cards_highlighted = True
 
     def event_player_1_score(self):
-        
+
         if not self.cards_highlighted:
             self.player1.score += 1
         self.generate_cards()
-        
+
 
     def event_player_2_score(self):
 
@@ -60,6 +61,8 @@ class FullTwoPlayer(Game):
 
     DEBOUNCE_TIME = 0.2
     MULTIPLAYER = True
+    num_local_players = 2
+    num_network_players = 0
     def load_card_position(self):
 
         self.num_cards = 3
@@ -125,11 +128,14 @@ class SimpleOnline(Game):
 
     DEBOUNCE_TIME = 0.2
     NETWORK_RATE_LIMIT = 0.2
+    num_local_players = 1
+    num_network_players = 1
     def __init__(self,config):
         super().__init__(config)
         self.online = True
         self.network_interface = NetworkInterface(self.player1.name)
-        self.network_interface.queue_message('HELLO','')
+        self.network_interface.get_player_network_ids(self.player1,self.player2)
+        self.load_network_events()
 
     def load_card_position(self):
         self.num_cards = 2
@@ -149,10 +155,10 @@ class SimpleOnline(Game):
         self.cards_highlighted = True
 
     def event_player_score(self):
-        
+
         if not self.cards_highlighted:
             self.player1.score += 1
-            self.network_interface.queue_message('MSG_ALL','score')
+            self.network_interface.queue_message(self.player2.network_id,'MSG','score')
         self.generate_cards()
 
     def event_other_player_score(self):
@@ -165,7 +171,7 @@ class SimpleOnline(Game):
 
         self.player1.score = 0
         self.player2.score = 0
-        self.network_interface.queue_message('MSG_ALL','reset')
+        self.network_interface.queue_message(self.player2.network_id,'MSG','reset')
 
     def event_higlight_images(self):
         if not self.cards_highlighted:
@@ -176,7 +182,7 @@ class SimpleOnline(Game):
     def load_events(self):
         self.event_handlers +=  [ EventHandlerKey(self.event_player_score,     self.DEBOUNCE_TIME, pygame.MOUSEBUTTONDOWN),
                                   EventHandlerKey(self.event_reset_scores,    self.DEBOUNCE_TIME, pygame.KEYDOWN, event_key=pygame.K_RCTRL),
-                                  EventHandlerKey(self.event_higlight_images, self.DEBOUNCE_TIME, pygame.KEYDOWN, event_key=pygame.K_SPACE),
-
-                                  EventHandlerNetwork(self.event_other_player_score, self.NETWORK_RATE_LIMIT, TxMessage(self.player2.name,'MSG_ALL','score')),
-                                  EventHandlerNetwork(self.event_reset_scores,       self.NETWORK_RATE_LIMIT, TxMessage(self.player2.name,'MSG_ALL','reset')) ]
+                                  EventHandlerKey(self.event_higlight_images, self.DEBOUNCE_TIME, pygame.KEYDOWN, event_key=pygame.K_SPACE) ]
+    def load_network_events(self):
+        self.event_handlers += [ EventHandlerNetwork(self.event_other_player_score, self.NETWORK_RATE_LIMIT, Message(self.player2.network_id,self.player1.network_id,'MSG','score')),
+                                 EventHandlerNetwork(self.event_reset_scores,       self.NETWORK_RATE_LIMIT, Message(self.player2.network_id,self.player1.network_id,'MSG','reset')) ]
