@@ -18,8 +18,9 @@ class Game:
         self.screen = pygame.display.set_mode((self.width,self.height))
         self.clock = pygame.time.Clock()
 
-        self.small_font = pygame.font.SysFont("Arial", int((50) * (self.width/1200)))
-        self.large_font = pygame.font.SysFont("Arial", int((120) * (self.width/1200)))
+        self.small_font =  pygame.font.SysFont("Arial", int((30) * (self.width/1200)))
+        self.medium_font = pygame.font.SysFont("Arial", int((50) * (self.width/1200)))
+        self.large_font =  pygame.font.SysFont("Arial", int((120) * (self.width/1200)))
 
         self.dealer = CardDealer()
 
@@ -83,8 +84,8 @@ class Game:
         left_name_pos = (self.width//4,name_height)
         right_name_pos = (self.width - self.width//4,name_height)
 
-        self.left_name = self.small_font.render(self.player1.name, True, self.player1.colour_rgb)
-        self.right_name = self.small_font.render(self.player2.name, True, self.player2.colour_rgb)
+        self.left_name = self.medium_font.render(self.player1.name, True, self.player1.colour_rgb)
+        self.right_name = self.medium_font.render(self.player2.name, True, self.player2.colour_rgb)
         self.left_name_rect = self.left_name.get_rect(center=left_name_pos)
         self.right_name_rect = self.right_name.get_rect(center=right_name_pos)
 
@@ -164,14 +165,14 @@ class Game:
             heading_text = self.small_font.render(f'Player {player_index+1}, enter your name a space and your favourite color', True, (255, 0, 0))
             self.screen.blit(heading_text, (self.width/16,self.height/4))
 
-            input_text = self.small_font.render(player_input, True, (255, 0, 0))
+            input_text = self.medium_font.render(player_input, True, (255, 0, 0))
             self.screen.blit(input_text, (self.width/2,self.height/2))
 
             pygame.display.flip()
             self.clock.tick(60)
 
         self.screen.fill((240, 240, 240))
-        heading_text = self.small_font.render('Waiting for network players...', True, (255, 0, 0))
+        heading_text = self.medium_font.render('Waiting for network players...', True, (255, 0, 0))
         self.screen.blit(heading_text, (self.width/16,self.height/4))
 
         pygame.display.flip()
