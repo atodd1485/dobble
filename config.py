@@ -4,8 +4,12 @@ class Config:
 
     def __init__(self):
 
+        print("\nInitialising config")
         with open(self.CONFIG_FILENAME) as file:
             for line in file.readlines():
+
+                if line.startswith('#') or not '=' in line:
+                    continue
 
                 key,val = line.split('=')
                 key = key.strip().lower()
@@ -25,3 +29,4 @@ class Config:
                 except ValueError:
                     pass
                 setattr(self,key,val)
+        print("\n")

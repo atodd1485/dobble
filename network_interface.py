@@ -1,9 +1,10 @@
 from message import Message, MessageHandler
+from player import Player
 import threading, socket, random, time
 
 class NetworkInterface:
 
-    def __init__(self,player_name, host, port):
+    def __init__(self, player, host, port):
 
         self.host = host
         self.port = port
@@ -20,7 +21,7 @@ class NetworkInterface:
         threading.Thread(target=self.network_loop, args=(self.sock,), daemon=True).start()
 
         self.seed = random.randrange(0,2000)
-        self.queue_message(0, 'HELLO', f'{self.seed}:{player_name}')
+        self.queue_message(0, 'HELLO', f'{self.seed},{player.name},{player.colour}')
 
 
     def network_loop(self,sock):
@@ -36,10 +37,9 @@ class NetworkInterface:
 
                 # network_id assignment message
                 if decoded_message.receiver_id == 101 and decoded_message.tag == 'HELLO':
-                    seed,network_id = decoded_message.content.split(':')
+                    seed,network_id = decoded_message.content.split(',')
                     if int(seed) == self.seed:
                         self.network_id = int(network_id)
-                        print(f"Assinged network_id {self.network_id}")
                     continue
 
                 # ignore message meant for others
@@ -56,22 +56,33 @@ class NetworkInterface:
             except socket.timeout:
                 pass
 
-    def get_player_network_ids(self,player1,player2):
+    def get_online_opponent(self,player1):
 
         player_ids_established = False
+        waiting_message_printed = False
         while True:
             player_ids_established = self.network_id != 101 and self.opponent_data is not None
             if player_ids_established:
                 break
-            print("Waiting for players to be established on the network")
-            time.sleep(2)
+            if not waiting_message_printed:
+                print("Waiting for players to be established on the network")
+                waiting_message_printed = True
+            else:
+                print('.',end='',flush=True)
+
+            time.sleep(0.5)
+        print('\n')
 
         player1.network_id = self.network_id
 
-        opponent_network_id, opponent_name = self.opponent_data.split(':')
-        player2.network_id = int(opponent_network_id)
-        player2.name = opponent_name
-        print("PLAYER 2 IS ", player2.name )
+        opponent_network_id, opponent_name, opponent_colour = self.opponent_data.split(',')
+
+        opponent = Player(opponent_name,opponent_colour)
+        opponent.network_id = int(opponent_network_id)
+
+        print(f'Player {opponent.name} joined')
+
+        return opponent
 
     def queue_message(self,receiver_id,tag,message_content):
 

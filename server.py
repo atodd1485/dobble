@@ -3,9 +3,10 @@ from config import Config
 import socket, threading
 
 class Client:
-    def __init__(self,name,conn):
+    def __init__(self,name,colour,conn):
 
         self.name = name
+        self.colour = colour
         self.network_id = 101
         self.conn = conn
         self.connected = True
@@ -29,6 +30,9 @@ class Server:
         self.network_id = 0
 
         self.next_client_network_id = 1
+
+        print("Server started")
+
         while not self.shutdown:
             try:
                 conn, addr = self.socket.accept()
@@ -77,8 +81,8 @@ class Server:
 
         client1, client2 = self.clients[self.num_clients-1], self.clients[self.num_clients]
         self.pairs.append( (client1, client2) )
-        self.send_message(client1, 'OPPONENT', f'{client2.network_id}:{client2.name}')
-        self.send_message(client2, 'OPPONENT', f'{client1.network_id}:{client1.name}')
+        self.send_message(client1, 'OPPONENT', f'{client2.network_id},{client2.name},{client2.colour}')
+        self.send_message(client2, 'OPPONENT', f'{client1.network_id},{client1.name},{client1.colour}')
 
     def handle_client(self, conn, addr):
         this_client = None
@@ -94,9 +98,9 @@ class Server:
 
                 if rx_message.tag == 'HELLO':
                     if rx_message.sender_id == 101:
-                        seed,name = rx_message.content.split(':')
-                        this_client = Client(name,conn)
-                        self.send_message(this_client,'HELLO',f"{seed}:{self.next_client_network_id}")
+                        seed,name,colour = rx_message.content.split(',')
+                        this_client = Client(name,colour,conn)
+                        self.send_message(this_client,'HELLO',f"{seed},{self.next_client_network_id}")
 
                         new_network_id = self.next_client_network_id
                         self.next_client_network_id += 1

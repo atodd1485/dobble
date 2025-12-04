@@ -33,11 +33,11 @@ class Game:
         self.cards = list()
         self.num_cards = 0
 
-        self.player_entry()
+        self.local_player_entry()
         self.generate_cards()
         self.generate_event_handlers()
 
-    def generate_player(self,player_input,player_index):
+    def generate_local_player(self,player_input,player_index):
         split_list = player_input.split()
         if len(split_list) != 2:
             print("Provide name and color only")
@@ -130,11 +130,11 @@ class Game:
             pygame.display.flip()
             self.clock.tick(60)
 
-    def player_entry(self):
+    def local_player_entry(self):
 
         if self.skip_player_input:
-            self.generate_player('Player_1 red',0)
-            self.generate_player('Player_2 blue',1)
+            self.generate_local_player('Player_1 red',0)
+            self.generate_local_player('Player_2 blue',1)
             return
 
         player_input = ""
@@ -148,7 +148,7 @@ class Game:
 
                 if e.type == pygame.KEYDOWN:
                     if e.key == pygame.K_RETURN:
-                        if not self.generate_player(player_input,player_index): continue
+                        if not self.generate_local_player(player_input,player_index): continue
                         player_input = ""
                         player_index += 1
 
@@ -176,9 +176,6 @@ class Game:
 
         pygame.display.flip()
         self.clock.tick(60)
-
-        for i in range(self.num_network_players):
-            self.generate_player('place_holder red',player_index + i)
 
     def quit_game(self):
         print("Exiting...")
