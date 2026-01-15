@@ -112,14 +112,12 @@ class Game:
             now = time.time()
             for e in pygame.event.get():
                 for event_handler in self.event_handlers:
-                    if type(event_handler) == EventHandlerKey:
-                        event_handler.check(e,now)
+                    event_handler.check(e,now)
             if self.online:
                 for msg in self.network_interface.get_new_messages():
                     print("MESSAGE")
-                    for event_handler in self.event_handlers:
-                        if type(event_handler) == EventHandlerNetwork:
-                            event_handler.check(msg,now)
+                    for event_handler in self.network_event_handlers:
+                        event_handler.check(msg,now)
             if (now - self.last_update_cards) > 0.005:
                 self.update_cards()
                 self.last_update_cards = now

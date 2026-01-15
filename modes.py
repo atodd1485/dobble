@@ -185,5 +185,5 @@ class SimpleOnline(Game):
                                   EventHandlerKey(self.event_reset_scores,    self.DEBOUNCE_TIME, pygame.KEYDOWN, event_key=pygame.K_RCTRL),
                                   EventHandlerKey(self.event_higlight_images, self.DEBOUNCE_TIME, pygame.KEYDOWN, event_key=pygame.K_SPACE) ]
     def load_network_events(self):
-        self.event_handlers += [ EventHandlerNetwork(self.event_other_player_score, self.NETWORK_RATE_LIMIT, Message(self.player2.network_id,self.player1.network_id,'MSG','score')),
-                                 EventHandlerNetwork(self.event_reset_scores,       self.NETWORK_RATE_LIMIT, Message(self.player2.network_id,self.player1.network_id,'MSG','reset')) ]
+        self.network_event_handlers = [ EventHandlerNetwork(self.event_other_player_score, self.NETWORK_RATE_LIMIT, Message(self.player2.network_id,self.player1.network_id,'MSG','score')),
+                                        EventHandlerNetwork(self.event_reset_scores,       self.NETWORK_RATE_LIMIT, Message(self.player2.network_id,self.player1.network_id,'MSG','reset')) ]
