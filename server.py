@@ -1,5 +1,6 @@
 from message import Message, MessageHandler
 from config import Config
+from cards import CardDealer
 import socket, threading
 
 class Client:
@@ -10,7 +11,19 @@ class Client:
         self.network_id = 101
         self.conn = conn
         self.connected = True
+        self.hosted_game_id = None
 
+class HostedGame:
+    def __init__(self,clients,hosted_game_id):
+        self.clients = clients
+        self.dealer = CardDealer()
+        self.hosted_game_id = hosted_game_id
+        for client in self.clients:
+            client.hosted_game_id = self.hosted_game_id
+        print(f'Game {self.hosted_game_id} started')
+
+    def kill(self):
+        print(f'Game {self.hosted_game_id} killed')
 
 class Server:
 
@@ -19,7 +32,8 @@ class Server:
         self.host = host
         self.port = port
         self.clients = {}
-        self.pairs = list()
+        self.hosted_games = list()
+        self.num_hosted_games = 0
         self.num_clients = 0
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.bind((self.host, self.port))
@@ -77,12 +91,13 @@ class Server:
         print(message)
         receiving_client.conn.sendall(encoded_message)
 
-    def make_pairing(self):
+    def make_hosted_game(self):
 
         client1, client2 = self.clients[self.num_clients-1], self.clients[self.num_clients]
-        self.pairs.append( (client1, client2) )
+        self.hosted_games.append( HostedGame((client1, client2), self.num_hosted_games) )
         self.send_message(client1, 'OPPONENT', f'{client2.network_id},{client2.name},{client2.colour}')
         self.send_message(client2, 'OPPONENT', f'{client1.network_id},{client1.name},{client1.colour}')
+        self.num_hosted_games += 1
 
     def handle_client(self, conn, addr):
         this_client = None
@@ -110,7 +125,7 @@ class Server:
                         self.num_clients += 1
 
                         if self.num_clients % 2 == 0:
-                            self.make_pairing()
+                            self.make_hosted_game()
 
                     elif this_client is not None:
                         self.send_message(this_client,'MSG',f"Hello {rx_message.sender_id}, I'm server")
@@ -128,11 +143,13 @@ class Server:
                         self.broadcast(Message(self.network_id,99,'MSG',f'{rx_message.network_id} said {rx_message.content} to everyone'))
                     else:
                         self.forward_message(rx_message)
+
             except Exception as e:
                 print(f"Error with client {addr}: {e}")
                 break
 
         if this_client is not None:
+            self.hosted_games[this_client.hosted_game_id].kill()
             del self.clients[this_client.network_id]
         conn.close()
         print(f"Client disconnected: {addr}")

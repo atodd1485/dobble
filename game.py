@@ -56,14 +56,13 @@ class Game:
 
         return True
 
-    def generate_cards(self):
+    def generate_cards(self,cards=None):
         self.cards_highlighted = False
         self.cards = list()
         self.load_card_position()
 
         for position,radius in zip(self.card_positions,self.card_radii):
-            new_card = Card(position,radius,self.dealer,no_movement=self.no_movement)
-
+            new_card = Card(position,radius,dealer=self.dealer,no_movement=self.no_movement)
             new_card.fill_with_images()
             self.cards.append( new_card )
 

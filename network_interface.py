@@ -15,6 +15,7 @@ class NetworkInterface:
 
         self.network_id = 101
         self.opponent_data = None
+        self.deal_data = None
 
         self.new_message_ready = False
         self.message_handler = MessageHandler()
@@ -51,6 +52,11 @@ class NetworkInterface:
                     self.opponent_data = decoded_message.content
                     continue
 
+                # card deal message
+                if decoded_message.tag == 'DEAL':
+                    self.deal_data = decoded_message.content
+                    continue
+
                 self.rx_messages.append(self.message_handler.get_decoded_message(data))
 
             except socket.timeout:
@@ -58,12 +64,11 @@ class NetworkInterface:
 
     def get_online_opponent(self,player1):
 
-        player_ids_established = False
+        player_ids_established = self.network_id != 101 and self.opponent_data is not None
         waiting_message_printed = False
-        while True:
+
+        while not player_ids_established:
             player_ids_established = self.network_id != 101 and self.opponent_data is not None
-            if player_ids_established:
-                break
             if not waiting_message_printed:
                 print("Waiting for players to be established on the network")
                 waiting_message_printed = True
@@ -76,6 +81,32 @@ class NetworkInterface:
         player1.network_id = self.network_id
 
         opponent_network_id, opponent_name, opponent_colour = self.opponent_data.split(',')
+
+        opponent = Player(opponent_name,opponent_colour)
+        opponent.network_id = int(opponent_network_id)
+
+        print(f'Player {opponent.name} joined')
+
+        return opponent
+
+    def get_cards(self):
+
+        received_card = False
+        waiting_message_printed = False
+
+        self.queue_message(self,0,'DEAL','')
+        while not received_card:
+
+            if not waiting_message_printed:
+                print("Waiting for network to deal new cards")
+                waiting_message_printed = True
+            else:
+                print('.',end='',flush=True)
+
+            time.sleep(0.5)
+        print('\n')
+
+        cards_data = self.deal_data.split(',')
 
         opponent = Player(opponent_name,opponent_colour)
         opponent.network_id = int(opponent_network_id)

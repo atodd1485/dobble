@@ -62,18 +62,26 @@ class Card:
     IMAGE_ROTATION_ANG_VELOCITY = 0.5
     IMAGE_BOUNCE_ANG_VELOCITY = 1.5
 
-    def __init__(self,position,radius,dealer,no_movement=False):
+    def __init__(self,position,radius,dealt_card_data=None,dealer=None,no_movement=False):
         self.position = position
         self.start_position = position.copy()
         self.radius = radius
         self.images = list()
         self.dealer = dealer
+        self.dealt_card_data = dealt_card_data
         self.no_movement = no_movement
         self.phase = 0
 
     def fill_with_images(self):
 
-        images = self.dealer.draw()
+        if self.dealer is not None:
+            images = self.dealer.draw()
+        elif self.dealt_card_data is not None:
+            images = self.dealt_card_data
+        else:
+            print("Can't populate card")
+            return
+
         num_images = len(images)
         max_image_size = int( self.radius // 2 )
 
