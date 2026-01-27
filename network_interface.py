@@ -68,23 +68,25 @@ class NetworkInterface:
             except socket.timeout:
                 pass
 
-    def get_online_opponent(self,player1):
+    def get_online_opponent_and_seed(self,player1):
 
         player_ids_established = self.network_id != 101 and self.opponent_data is not None
 
         if not player_ids_established:
-            return None
+            return None, None
 
         player1.network_id = self.network_id
 
-        opponent_network_id, opponent_name, opponent_colour = self.opponent_data.split(',')
+        opponent_network_id, opponent_name, opponent_colour, rng_seed = self.opponent_data.split(',')
 
         opponent = Player(opponent_name,opponent_colour)
         opponent.network_id = int(opponent_network_id)
 
         print(f'Player {opponent.name} joined')
 
-        return opponent
+        rng_seed = int(rng_seed)
+
+        return opponent,rng_seed
 
     def request_cards(self):
         if self.waiting_for_dealer:

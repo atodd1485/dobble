@@ -23,7 +23,7 @@ class Game:
         self.large_font =  pygame.font.SysFont("Arial", int((120) * (self.width/1200)))
 
         self.dealer = CardDealer()
-
+        self.rng_seed = None
         self.last_click = 0
         self.last_key = 0
         self.last_update_cards = 0
@@ -65,12 +65,12 @@ class Game:
 
         if card_data is None:
             for position,radius in zip(self.card_positions,self.card_radii):
-                new_card = Card(position,radius,dealer=self.dealer,no_movement=self.no_movement)
+                new_card = Card(position,radius,dealer=self.dealer,no_movement=self.no_movement,rng_seed=self.rng_seed)
                 new_card.fill_with_images()
                 self.cards.append( new_card )
         else:
             for position,radius,card_data in zip(self.card_positions,self.card_radii, card_data):
-                new_card = Card(position,radius,card_data=card_data,no_movement=self.no_movement)
+                new_card = Card(position,radius,card_data=card_data,no_movement=self.no_movement,rng_seed=self.rng_seed)
                 new_card.fill_with_images()
                 self.cards.append( new_card )
 

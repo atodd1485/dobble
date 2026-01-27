@@ -12,11 +12,11 @@ class Image:
 
     BORDER_WIDTH = 5
 
-    def __init__(self,position,image_key,max_size):
+    def __init__(self,position,image_key,max_size,rng=random.Random()):
         self.key = image_key
         self.img_path = IMAGES_DICT[self.key]
         img = pygame.image.load(self.img_path).convert_alpha()
-        size = random.randrange(40,max_size)
+        size = rng.randrange(40,max_size)
         self.img = pygame.transform.smoothscale(img, (size,size))
         self.start_position = position.copy()
         self.position = position
@@ -62,7 +62,7 @@ class Card:
     IMAGE_ROTATION_ANG_VELOCITY = 0.5
     IMAGE_BOUNCE_ANG_VELOCITY = 1.5
 
-    def __init__(self,position,radius,card_data=None,dealer=None,no_movement=False):
+    def __init__(self,position,radius,card_data=None,dealer=None,no_movement=False,rng_seed=None):
         self.position = position
         self.start_position = position.copy()
         self.radius = radius
@@ -70,6 +70,7 @@ class Card:
         self.dealer = dealer
         self.card_data = card_data
         self.no_movement = no_movement
+        self.rng = random.Random(rng_seed)
         self.phase = 0
 
     def fill_with_images(self):
@@ -87,7 +88,7 @@ class Card:
 
         for i,img_key in enumerate(images):
             position = self.random_sector_position(i,num_images)
-            self.images.append(Image(position,img_key, max_image_size))
+            self.images.append(Image(position,img_key, max_image_size,rng=self.rng))
 
     def update(self):
         self.phase += 0.1
@@ -114,9 +115,9 @@ class Card:
     def random_sector_position(self,sector_number,total_sectors):
 
         sector_size = (2 * np.pi) / total_sectors
-        u = random.uniform(0.2**2, 0.8**2)
+        u = self.rng.uniform(0.2**2, 0.8**2)
         r = self.radius * (u**0.5)
-        theta = random.uniform(sector_number * sector_size,
+        theta = self.rng.uniform(sector_number * sector_size,
                                (sector_number + 1) * sector_size)
 
         return np.array( (self.position[0] + r * np.cos(theta), self.position[1] + r * np.sin(theta)) , dtype=float )

@@ -1,7 +1,7 @@
 from message import Message, MessageHandler
 from config import Config
 from cards import CardDealer
-import socket, threading
+import socket, threading, random
 
 class Client:
     def __init__(self,name,colour,conn):
@@ -18,6 +18,7 @@ class HostedGame:
         self.clients = clients
         self.dealer = CardDealer()
         self.hosted_game_id = hosted_game_id
+        self.rng_seed = random.randrange(2**64)
         for client in self.clients:
             client.hosted_game_id = self.hosted_game_id
         print(f'Game {self.hosted_game_id} started')
@@ -118,9 +119,10 @@ class Server:
     def make_hosted_game(self):
 
         client1, client2 = self.clients[self.num_clients-1], self.clients[self.num_clients]
-        self.hosted_games.append( HostedGame((client1, client2), self.num_hosted_games) )
-        self.send_message(client1, 'OPPONENT', f'{client2.network_id},{client2.name},{client2.colour}')
-        self.send_message(client2, 'OPPONENT', f'{client1.network_id},{client1.name},{client1.colour}')
+        new_game = HostedGame((client1, client2), self.num_hosted_games)
+        self.hosted_games.append( new_game )
+        self.send_message(client1, 'OPPONENT', f'{client2.network_id},{client2.name},{client2.colour},{new_game.rng_seed}')
+        self.send_message(client2, 'OPPONENT', f'{client1.network_id},{client1.name},{client1.colour},{new_game.rng_seed}')
         self.num_hosted_games += 1
 
     def handle_client(self, conn, addr):

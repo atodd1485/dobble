@@ -141,7 +141,7 @@ class SimpleOnline(Game):
 
     def load_network_players(self):
 
-        opponent = self.network_interface.get_online_opponent(self.player1)
+        opponent, seed = self.network_interface.get_online_opponent_and_seed(self.player1)
         now = time.time()
         while opponent is None:
             for e in pygame.event.get():
@@ -154,9 +154,10 @@ class SimpleOnline(Game):
 
             pygame.display.flip()
             self.clock.tick(60)
-            opponent = self.network_interface.get_online_opponent(self.player1)
+            opponent, seed = self.network_interface.get_online_opponent_and_seed(self.player1)
 
         self.player2 = opponent
+        self.rng_seed = seed
 
     def load_card_position(self):
         self.num_cards = 2
