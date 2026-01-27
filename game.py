@@ -129,7 +129,6 @@ class Game:
                     self.generate_cards(card_data=card_data)
             elif self.online:
                 for msg in self.network_interface.get_new_messages():
-                    print("MESSAGE")
                     for event_handler in self.network_event_handlers:
                         event_handler.check(msg,now)
             if (now - self.last_update_cards) > 0.005:
