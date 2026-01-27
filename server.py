@@ -21,6 +21,30 @@ class HostedGame:
         for client in self.clients:
             client.hosted_game_id = self.hosted_game_id
         print(f'Game {self.hosted_game_id} started')
+        self.deals = [0,0]
+        self.next_card_data = [self.dealer.draw(),self.dealer.draw()]
+
+    def deal(self,client):
+        if client not in self.clients:
+            print("Client not recognised")
+            return None
+
+        client_index = self.clients.index(client)
+        opponent_index = (client_index + 1) % 2
+        if self.deals[client_index] > self.deals[opponent_index]:
+            print("Client cannot be dealt to yet")
+            return None
+
+        card1_data,card2_data = self.next_card_data
+        self.deals[client_index] += 1
+
+        if self.deals[client_index] == self.deals[opponent_index]:
+            self.next_card_data = [self.dealer.draw(),self.dealer.draw()]
+
+        card_data_str = ''
+        for data in card1_data + card2_data:
+            card_data_str += str(data) + ','
+        return card_data_str[:-1]
 
     def kill(self):
         print(f'Game {self.hosted_game_id} killed')
@@ -133,16 +157,24 @@ class Server:
                 if this_client is None:
                     continue
 
+
                 if rx_message.tag == 'MSG':
                     if rx_message.receiver_id == self.network_id:
-                        self.send_message(this_client,Message(self.network_id,this_client.network_id,'MSG',f'{this_client.network_id} said {rx_message.content} to the server'))
+                        self.send_message(this_client,'MSG',f'{this_client.network_id} said {rx_message.content} to the server')
                         if rx_message.content == 'shutdown':
                             print("{name} requested shutdown")
                             self.shutdown = True
                     elif rx_message.receiver_id == 99:
-                        self.broadcast(Message(self.network_id,99,'MSG',f'{rx_message.network_id} said {rx_message.content} to everyone'))
+                        self.broadcast('MSG',f'{rx_message.network_id} said {rx_message.content} to everyone')
                     else:
                         self.forward_message(rx_message)
+
+                if rx_message.tag == 'DEAL':
+                    print("DEAL MESSAGE")
+                    hosted_game = self.hosted_games[this_client.hosted_game_id]
+                    card_data = hosted_game.deal(this_client)
+                    if card_data is not None:
+                        self.send_message(this_client,'DEAL',f'{card_data}')
 
             except Exception as e:
                 print(f"Error with client {addr}: {e}")

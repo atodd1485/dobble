@@ -34,6 +34,8 @@ class Game:
         self.cards = list()
         self.num_cards = 0
 
+        self.waiting_for_network = False
+
         self.local_player_entry()
         self.generate_cards()
         self.generate_event_handlers()
@@ -56,15 +58,21 @@ class Game:
 
         return True
 
-    def generate_cards(self,cards=None):
+    def generate_cards(self, card_data=None):
         self.cards_highlighted = False
         self.cards = list()
         self.load_card_position()
 
-        for position,radius in zip(self.card_positions,self.card_radii):
-            new_card = Card(position,radius,dealer=self.dealer,no_movement=self.no_movement)
-            new_card.fill_with_images()
-            self.cards.append( new_card )
+        if card_data is None:
+            for position,radius in zip(self.card_positions,self.card_radii):
+                new_card = Card(position,radius,dealer=self.dealer,no_movement=self.no_movement)
+                new_card.fill_with_images()
+                self.cards.append( new_card )
+        else:
+            for position,radius,card_data in zip(self.card_positions,self.card_radii, card_data):
+                new_card = Card(position,radius,card_data=card_data,no_movement=self.no_movement)
+                new_card.fill_with_images()
+                self.cards.append( new_card )
 
     def update_cards(self):
         for card in self.cards:
@@ -90,7 +98,7 @@ class Game:
 
     def generate_event_handlers(self):
         self.event_handlers = list()
-        self.event_handlers.append(EventHandlerKey(self.quit_game,0,pygame.QUIT))
+        self.event_handlers.append(EventHandlerKey(self.quit_game,0,pygame.QUIT,persistent=True))
         self.load_events()
 
     def draw_scores(self):
@@ -109,10 +117,16 @@ class Game:
         self.generate_scores()
         while True:
             now = time.time()
+            waiting_for_network = self.online and self.network_interface.waiting_for_dealer
             for e in pygame.event.get():
                 for event_handler in self.event_handlers:
-                    event_handler.check(e,now)
-            if self.online:
+                    if not waiting_for_network or event_handler.persistent:
+                        event_handler.check(e,now)
+            if waiting_for_network:
+                card_data = self.network_interface.get_cards()
+                if card_data is not None:
+                    self.generate_cards(card_data=card_data)
+            elif self.online:
                 for msg in self.network_interface.get_new_messages():
                     print("MESSAGE")
                     for event_handler in self.network_event_handlers:
@@ -167,13 +181,6 @@ class Game:
 
             pygame.display.flip()
             self.clock.tick(60)
-
-        self.screen.fill((240, 240, 240))
-        heading_text = self.medium_font.render('Waiting for network players...', True, (255, 0, 0))
-        self.screen.blit(heading_text, (self.width/16,self.height/4))
-
-        pygame.display.flip()
-        self.clock.tick(60)
 
     def quit_game(self):
         print("Exiting...")

@@ -26,7 +26,7 @@ class MessageHandler:
         decoded_message = data.decode().strip()
         parts = decoded_message.split("|")
         if len(parts) != 4:
-            print("Invalid message : {decoded_message}")
+            print("Invalid message : f{decoded_message}")
             return None
         return Message(*parts)
 

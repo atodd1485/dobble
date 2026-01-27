@@ -1,12 +1,13 @@
 class EventHandlerKey:
 
-    def __init__(self,callback,rate_limit,event_type,event_key=None):
+    def __init__(self,callback,rate_limit,event_type,event_key=None,persistent=False):
 
         self.last_trigger = 0
         self.callback = callback
         self.event_type = event_type
         self.event_key = event_key
         self.rate_limit = rate_limit
+        self.persistent = persistent
 
     def check(self,pygame_event,now):
         if (now - self.last_trigger) <= self.rate_limit:

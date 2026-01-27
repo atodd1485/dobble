@@ -4,6 +4,7 @@ from network_interface import NetworkInterface
 from message import Message
 import numpy as np
 import pygame
+import time
 
 class SimpleTwoPlayer(Game):
 
@@ -135,8 +136,27 @@ class SimpleOnline(Game):
         self.online = True
         host = '127.0.0.1' if config.host == 'local' else config.host
         self.network_interface = NetworkInterface(self.player1, host, config.port)
-        self.player2 = self.network_interface.get_online_opponent(self.player1)
+        self.load_network_players()
         self.load_network_events()
+
+    def load_network_players(self):
+
+        opponent = self.network_interface.get_online_opponent(self.player1)
+        now = time.time()
+        while opponent is None:
+            for e in pygame.event.get():
+                for event_handler in self.event_handlers:
+                    if event_handler.persistent:
+                        event_handler.check(e,now)
+            self.screen.fill((240, 240, 240))
+            heading_text = self.medium_font.render('Waiting for network players...', True, (255, 0, 0))
+            self.screen.blit(heading_text, (self.width/16,self.height/4))
+
+            pygame.display.flip()
+            self.clock.tick(60)
+            opponent = self.network_interface.get_online_opponent(self.player1)
+
+        self.player2 = opponent
 
     def load_card_position(self):
         self.num_cards = 2
@@ -160,13 +180,15 @@ class SimpleOnline(Game):
         if not self.cards_highlighted:
             self.player1.score += 1
             self.network_interface.queue_message(self.player2.network_id,'MSG','score')
-        self.generate_cards()
+
+        self.network_interface.request_cards()
 
     def event_other_player_score(self):
 
         if not self.cards_highlighted:
             self.player2.score += 1
-        self.generate_cards()
+
+        self.network_interface.request_cards()
 
     def event_reset_scores(self):
 
