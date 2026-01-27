@@ -1,6 +1,6 @@
 from message import Message, MessageHandler
 from config import Config
-from cards import CardDealer
+from dealer import CardDealer
 import socket, threading, random
 
 class Client:

@@ -1,4 +1,5 @@
-from cards import Card, CardDealer
+from cards import Card
+from dealer import CardDealer
 from player import Player
 from event_handler import EventHandlerKey,EventHandlerNetwork
 
