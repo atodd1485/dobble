@@ -36,6 +36,7 @@ class Game:
         self.num_cards = 0
 
         self.waiting_for_network = False
+        self.game_over = False
 
         self.local_player_entry()
         self.generate_cards()
@@ -116,7 +117,7 @@ class Game:
 
     def play(self):
         self.generate_scores()
-        while True:
+        while not self.game_over:
             now = time.time()
             waiting_for_network = self.online and self.network_interface.waiting_for_dealer
             for e in pygame.event.get():
@@ -141,6 +142,9 @@ class Game:
 
             pygame.display.flip()
             self.clock.tick(60)
+
+        while True:
+            self.message_screen_loop("The was game ended")
 
     def local_player_entry(self):
 
@@ -181,6 +185,21 @@ class Game:
 
             pygame.display.flip()
             self.clock.tick(60)
+
+    def message_screen_loop(self,message):
+
+        now = time.time()
+        for e in pygame.event.get():
+            for event_handler in self.event_handlers:
+                if event_handler.persistent:
+                    event_handler.check(e,now)
+
+        self.screen.fill((240, 240, 240))
+        heading_text = self.medium_font.render(message,True, (255, 0, 0))
+        self.screen.blit(heading_text, (self.width/16,self.height/4))
+
+        pygame.display.flip()
+        self.clock.tick(60)
 
     def quit_game(self):
         print("Exiting...")

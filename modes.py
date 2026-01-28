@@ -149,12 +149,8 @@ class SimpleOnline(Game):
                 for event_handler in self.event_handlers:
                     if event_handler.persistent:
                         event_handler.check(e,now)
-            self.screen.fill((240, 240, 240))
-            heading_text = self.medium_font.render('Waiting for network players...', True, (255, 0, 0))
-            self.screen.blit(heading_text, (self.width/16,self.height/4))
 
-            pygame.display.flip()
-            self.clock.tick(60)
+            self.message_screen_loop('Waiting for network players...')
             opponent, seed = self.network_interface.get_online_opponent_and_seed(self.player1)
 
         self.player2 = opponent
@@ -199,6 +195,9 @@ class SimpleOnline(Game):
         self.player1.score = 0
         self.player2.score = 0
 
+    def event_server_kill(self):
+        self.game_over = True
+
     def event_higlight_images(self):
         if not self.cards_highlighted:
             self.higlight_matching_images()
@@ -211,4 +210,5 @@ class SimpleOnline(Game):
                                   EventHandlerKey(self.event_higlight_images, self.DEBOUNCE_TIME, pygame.KEYDOWN, event_key=pygame.K_SPACE) ]
     def load_network_events(self):
         self.network_event_handlers = [ EventHandlerNetwork(self.event_other_player_score, self.NETWORK_RATE_LIMIT, Message(self.player2.network_id,self.player1.network_id,'MSG','score')),
-                                        EventHandlerNetwork(self.event_other_player_reset_scores, self.NETWORK_RATE_LIMIT, Message(self.player2.network_id,self.player1.network_id,'MSG','reset')) ]
+                                        EventHandlerNetwork(self.event_other_player_reset_scores, self.NETWORK_RATE_LIMIT, Message(self.player2.network_id,self.player1.network_id,'MSG','reset')),
+                                        EventHandlerNetwork(self.event_server_kill, self.NETWORK_RATE_LIMIT, Message(self.network_interface.SERVER_ID,self.player1.network_id,'KILL','')) ]

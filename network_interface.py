@@ -1,10 +1,14 @@
 from message import Message, MessageHandler
 from player import Player
+from server import UNKNOWN_CLIENT_ID,BROADCAST_ID,SERVER_ID
 import threading, socket, random, time
 
 class NetworkInterface:
 
     TX_RATE_LIMIT = 0.1
+    UNKNOWN_CLIENT_ID = UNKNOWN_CLIENT_ID
+    SERVER_ID = SERVER_ID
+    BROADCAST_ID = BROADCAST_ID
     def __init__(self, player, host, port):
 
         self.host = host
@@ -14,7 +18,7 @@ class NetworkInterface:
         self.sock.settimeout(0.1)
         self.rx_messages = list()
 
-        self.network_id = 101
+        self.network_id = self.UNKNOWN_CLIENT_ID
         self.opponent_data = None
         self.deal_data = None
 
@@ -25,7 +29,7 @@ class NetworkInterface:
         threading.Thread(target=self.network_loop, args=(self.sock,), daemon=True).start()
 
         self.seed = random.randrange(0,2000)
-        self.queue_message(0, 'HELLO', f'{self.seed},{player.name},{player.colour}')
+        self.queue_message(self.SERVER_ID, 'HELLO', f'{self.seed},{player.name},{player.colour}')
 
 
     def network_loop(self,sock):
@@ -42,14 +46,14 @@ class NetworkInterface:
                 decoded_message = self.message_handler.get_decoded_message(data)
 
                 # network_id assignment message
-                if decoded_message.receiver_id == 101 and decoded_message.tag == 'HELLO':
+                if decoded_message.receiver_id == self.UNKNOWN_CLIENT_ID and decoded_message.tag == 'HELLO':
                     seed,network_id = decoded_message.content.split(',')
                     if int(seed) == self.seed:
                         self.network_id = int(network_id)
                     continue
 
                 # ignore message meant for others
-                if decoded_message.receiver_id != self.network_id and decoded_message != 99:
+                if decoded_message.receiver_id != self.network_id and decoded_message.receiver_id != self.BROADCAST_ID:
                     continue
 
                 # opponent network assignment message
@@ -70,7 +74,7 @@ class NetworkInterface:
 
     def get_online_opponent_and_seed(self,player1):
 
-        player_ids_established = self.network_id != 101 and self.opponent_data is not None
+        player_ids_established = self.network_id != self.UNKNOWN_CLIENT_ID and self.opponent_data is not None
 
         if not player_ids_established:
             return None, None
@@ -92,7 +96,7 @@ class NetworkInterface:
         if self.waiting_for_dealer:
             return
         self.waiting_for_dealer = True
-        self.queue_message(0, 'DEAL', '')
+        self.queue_message(self.SERVER_ID, 'DEAL', '')
         return None
 
     def get_cards(self):
@@ -109,7 +113,7 @@ class NetworkInterface:
 
     def queue_message(self,receiver_id,tag,message_content):
 
-        network_id = self.network_id if self.network_id is not None else 101
+        network_id = self.network_id if self.network_id is not None else self.UNKNOWN_CLIENT_ID
         self.tx_buffer.append( Message(network_id,receiver_id,tag,message_content) )
 
     def send_message(self):

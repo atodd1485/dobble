@@ -3,12 +3,16 @@ from config import Config
 from dealer import CardDealer
 import socket, threading, random
 
+UNKNOWN_CLIENT_ID = 101
+BROADCAST_ID = 99
+SERVER_ID = 0
+
 class Client:
     def __init__(self,name,colour,conn):
 
         self.name = name
         self.colour = colour
-        self.network_id = 101
+        self.network_id = UNKNOWN_CLIENT_ID
         self.conn = conn
         self.connected = True
         self.hosted_game_id = None
@@ -24,6 +28,7 @@ class HostedGame:
         print(f'Game {self.hosted_game_id} started')
         self.deals = [0,0]
         self.next_card_data = [self.dealer.draw(),self.dealer.draw()]
+        self.killed = False
 
     def deal(self,client):
         if client not in self.clients:
@@ -48,6 +53,7 @@ class HostedGame:
         return card_data_str[:-1]
 
     def kill(self):
+        self.killed = True
         print(f'Game {self.hosted_game_id} killed')
 
 class Server:
@@ -66,7 +72,7 @@ class Server:
         self.socket.settimeout(1.0)
         self.shutdown = False
         self.message_handler = MessageHandler()
-        self.network_id = 0
+        self.network_id = SERVER_ID
 
         self.next_client_network_id = 1
 
@@ -125,6 +131,17 @@ class Server:
         self.send_message(client2, 'OPPONENT', f'{client1.network_id},{client1.name},{client1.colour},{new_game.rng_seed}')
         self.num_hosted_games += 1
 
+    def kill_hosted_game(self, hosted_game_id , killer_client):
+
+        hosted_game = self.hosted_games[hosted_game_id]
+        if hosted_game.killed:
+            return
+
+        self.hosted_games[hosted_game_id].kill()
+        for client in self.hosted_games[hosted_game_id].clients:
+            if client != killer_client:
+                self.send_message(client, 'KILL', '')
+
     def handle_client(self, conn, addr):
         this_client = None
         while not self.shutdown:
@@ -138,7 +155,7 @@ class Server:
                 print(rx_message)
 
                 if rx_message.tag == 'HELLO':
-                    if rx_message.sender_id == 101:
+                    if rx_message.sender_id == UNKNOWN_CLIENT_ID:
                         seed,name,colour = rx_message.content.split(',')
                         this_client = Client(name,colour,conn)
                         self.send_message(this_client,'HELLO',f"{seed},{self.next_client_network_id}")
@@ -166,7 +183,7 @@ class Server:
                         if rx_message.content == 'shutdown':
                             print("{name} requested shutdown")
                             self.shutdown = True
-                    elif rx_message.receiver_id == 99:
+                    elif rx_message.receiver_id == BROADCAST_ID:
                         self.broadcast('MSG',f'{rx_message.network_id} said {rx_message.content} to everyone')
                     else:
                         self.forward_message(rx_message)
@@ -182,8 +199,8 @@ class Server:
                 print(f"Error with client {addr}: {e}")
                 break
 
-        if this_client is not None:
-            self.hosted_games[this_client.hosted_game_id].kill()
+        if this_client.hosted_game_id is not None:
+            self.kill_hosted_game(this_client.hosted_game_id, this_client)
             del self.clients[this_client.network_id]
         conn.close()
         print(f"Client disconnected: {addr}")
