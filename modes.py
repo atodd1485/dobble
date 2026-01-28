@@ -138,6 +138,7 @@ class SimpleOnline(Game):
         self.network_interface = NetworkInterface(self.player1, host, config.port)
         self.load_network_players()
         self.load_network_events()
+        self.network_interface.request_cards()
 
     def load_network_players(self):
 
