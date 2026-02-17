@@ -135,7 +135,12 @@ class SimpleOnline(Game):
         super().__init__(config)
         self.online = True
         host = '127.0.0.1' if config.host == 'local' else config.host
-        self.network_interface = NetworkInterface(self.player1, host, config.port)
+        try:
+            self.network_interface = NetworkInterface(self.player1, host, config.port)
+        except:
+            print("Network Interface Error\nIs host correct and server running?")
+            while True:
+                self.message_screen_loop("The was game ended - Network Error")
         self.load_network_players()
         self.load_network_events()
         self.network_interface.request_cards()

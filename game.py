@@ -156,7 +156,9 @@ class Game:
         player_input = ""
         player_index = 0
 
+
         while player_index < self.num_local_players:
+            skip_prompt = False
             for e in pygame.event.get():
 
                 if e.type == pygame.QUIT:
@@ -167,6 +169,7 @@ class Game:
                         if not self.generate_local_player(player_input,player_index): continue
                         player_input = ""
                         player_index += 1
+                        skip_prompt = True
 
                     elif e.key == pygame.K_BACKSPACE:
                         player_input = player_input[:-1]
@@ -177,8 +180,9 @@ class Game:
 
             self.screen.fill((240, 240, 240))
 
-            heading_text = self.small_font.render(f'Player {player_index+1}, enter your name a space and your favourite color', True, (255, 0, 0))
-            self.screen.blit(heading_text, (self.width/16,self.height/4))
+            if not skip_prompt:
+                heading_text = self.small_font.render(f'Player {player_index+1}, enter your name a space and your favourite color', True, (255, 0, 0))
+                self.screen.blit(heading_text, (self.width/16,self.height/4))
 
             input_text = self.medium_font.render(player_input, True, (255, 0, 0))
             self.screen.blit(input_text, (self.width/2,self.height/2))
