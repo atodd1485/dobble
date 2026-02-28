@@ -43,6 +43,7 @@ class Card:
     SPEED = 1
     IMAGE_ROTATION_ANG_VELOCITY = 0.5
     IMAGE_BOUNCE_ANG_VELOCITY = 1.5
+    CARD_MOVEMENT_AMPLITUDE = 0.1
 
     def __init__(self,position,radius,card_data=None,dealer=None,no_movement=False,rng_seed=None):
         self.position = position
@@ -80,8 +81,8 @@ class Card:
             self.bounce()
 
     def move(self):
-        new_position = np.array([ (1 + 0.1*np.sin(self.phase)) * self.start_position[0],
-                                  (1 + 0.1*np.sin(2*self.phase)) * self.start_position[1] ])
+        new_position = np.array([ self.start_position[0] + self.CARD_MOVEMENT_AMPLITUDE * self.radius * np.sin(self.phase),
+                                  self.start_position[1] + self.CARD_MOVEMENT_AMPLITUDE * self.radius * np.sin(2 * self.phase) ])
         for img in self.images:
             img.position  = img.position - self.position + new_position
 
