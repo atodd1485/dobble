@@ -13,6 +13,7 @@ class Game:
         self.width,self.height = config.window_width,config.window_height
         self.skip_player_input = config.skip_player_input
         self.no_movement = config.no_movement
+        self.target_score = config.target_score
 
         self.online = False
 
@@ -93,8 +94,8 @@ class Game:
         left_name_pos = (self.width//4,name_height)
         right_name_pos = (self.width - self.width//4,name_height)
 
-        self.left_name = self.medium_font.render(self.player1.name, True, self.player1.colour_rgb)
-        self.right_name = self.medium_font.render(self.player2.name, True, self.player2.colour_rgb)
+        self.left_name = self.medium_font.render(f'{self.player1.name} : {self.player1.wins}', True, self.player1.colour_rgb)
+        self.right_name = self.medium_font.render(f'{self.player2.name} : {self.player2.wins}', True, self.player2.colour_rgb)
         self.left_name_rect = self.left_name.get_rect(center=left_name_pos)
         self.right_name_rect = self.right_name.get_rect(center=right_name_pos)
 
@@ -106,6 +107,9 @@ class Game:
     def draw_scores(self):
         left_score = self.large_font.render(str(self.player1.score), True, self.player1.colour_rgb)
         right_score = self.large_font.render(str(self.player2.score), True, self.player2.colour_rgb)
+
+        self.left_name = self.medium_font.render(f'{self.player1.name} : {self.player1.wins}', True, self.player1.colour_rgb)
+        self.right_name = self.medium_font.render(f'{self.player2.name} : {self.player2.wins}', True, self.player2.colour_rgb)
 
         left_score_rect = left_score.get_rect(center=self.left_score_pos)
         right_score_rect = right_score.get_rect(center=self.right_score_pos)
@@ -204,6 +208,20 @@ class Game:
 
         pygame.display.flip()
         self.clock.tick(60)
+
+    def reset_scores(self):
+        self.player1.score = 0
+        self.player2.score = 0
+    
+    def player_wins(self, player):
+        player.wins += 1
+        self.reset_scores()
+
+    def player_score(self,player):
+        if self.target_score == 0 or player.score < self.target_score - 1:
+            player.score += 1
+        else:
+            self.player_wins(player)
 
     def quit_game(self):
         print("Exiting...")

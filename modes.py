@@ -29,22 +29,17 @@ class SimpleTwoPlayer(Game):
         self.cards_highlighted = True
 
     def event_player_1_score(self):
-
         if not self.cards_highlighted:
-            self.player1.score += 1
+            self.player_score(self.player1)
         self.generate_cards()
 
-
     def event_player_2_score(self):
-
         if not self.cards_highlighted:
-            self.player2.score += 1
+            self.player_score(self.player2)
         self.generate_cards()
 
     def event_reset_scores(self):
-
-        self.player1.score = 0
-        self.player2.score = 0
+        self.reset_scores()
 
     def event_higlight_images(self):
         if not self.cards_highlighted:
@@ -99,19 +94,16 @@ class FullTwoPlayer(Game):
 
     def event_player_1_score(self):
         if not self.cards_highlighted:
-            self.player1.score += 1
+            self.player_score(self.player1)
         self.generate_cards()
 
     def event_player_2_score(self):
-
         if not self.cards_highlighted:
-            self.player2.score += 1
+            self.player_score(self.player2)
         self.generate_cards()
 
     def event_reset_scores(self):
-
-        self.player1.score = 0
-        self.player2.score = 0
+        self.reset_scores()
 
     def event_higlight_images(self):
         if not self.cards_highlighted:
@@ -180,25 +172,21 @@ class SimpleOnline(Game):
 
     def event_player_score(self):
         if not self.cards_highlighted:
-            self.player1.score += 1
-            self.network_interface.queue_message(self.player2.network_id,'MSG','score')
-
+            self.player_score(self.player1)
+        
+        self.network_interface.queue_message(self.player2.network_id,'MSG','score')
         self.network_interface.request_cards()
 
     def event_other_player_score(self):
-        if not self.cards_highlighted:
-            self.player2.score += 1
-
+        self.player_score(self.player2)
         self.network_interface.request_cards()
 
     def event_reset_scores(self):
-        self.player1.score = 0
-        self.player2.score = 0
+        self.reset_scores()
         self.network_interface.queue_message(self.player2.network_id,'MSG','reset')
 
     def event_other_player_reset_scores(self):
-        self.player1.score = 0
-        self.player2.score = 0
+        self.reset_scores()
 
     def event_server_kill(self):
         self.game_over = True

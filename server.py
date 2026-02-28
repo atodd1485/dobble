@@ -176,7 +176,6 @@ class Server:
                 if this_client is None:
                     continue
 
-
                 if rx_message.tag == 'MSG':
                     if rx_message.receiver_id == self.network_id:
                         self.send_message(this_client,'MSG',f'{this_client.network_id} said {rx_message.content} to the server')
